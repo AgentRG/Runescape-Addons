@@ -1,0 +1,10 @@
+{
+  "name": "Necromancy Stacks Audible Alert",
+  "version": "1.0.0",
+  "contactEmailAddress": "agentrg.dev@gmail.com",
+  "hasSettingsIcon": true,
+  "hasRibbonIcon": true,
+  "requiredDependencies": {
+    "prettyui": 6398181
+  }
+}

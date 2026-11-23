@@ -1,0 +1,52 @@
+name: Package RuneScape Addons
+
+on:
+  workflow_dispatch:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      mods: ${{ steps.find.outputs.mods }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Find addon folders
+        id: find
+        shell: bash
+        run: |
+          mods=$(for manifest in */plugin.json; do
+            if [[ -f "$manifest" ]]; then
+              dirname "$manifest"
+            fi
+          done | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "mods=$mods" >> "$GITHUB_OUTPUT"
+
+  package:
+    needs: discover
+    if: ${{ needs.discover.outputs.mods != '[]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mod: ${{ fromJSON(needs.discover.outputs.mods) }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Create addon archive
+        env:
+          MOD_DIR: ${{ matrix.mod }}
+        run: zip -r "$MOD_DIR.zip" "$MOD_DIR"
+
+      - name: Upload addon artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.mod }}
+          path: ${{ matrix.mod }}.zip
+          retention-days: 90
