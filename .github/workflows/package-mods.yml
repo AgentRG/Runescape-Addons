@@ -39,14 +39,9 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Create addon archive
-        env:
-          MOD_DIR: ${{ matrix.mod }}
-        run: zip -r "$MOD_DIR.zip" "$MOD_DIR"
-
       - name: Upload addon artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.mod }}
-          path: ${{ matrix.mod }}.zip
+          path: ${{ matrix.mod }}/
           retention-days: 90
