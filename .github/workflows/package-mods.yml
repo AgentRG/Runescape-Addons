@@ -3,6 +3,8 @@ name: Package RuneScape Addons
 on:
   workflow_dispatch:
   push:
+  schedule:
+    - cron: '0 0 * * *'
 
 permissions:
   contents: read
@@ -12,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       mods: ${{ steps.find.outputs.mods }}
+      run_due: ${{ steps.schedule.outputs.run_due }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -27,9 +30,20 @@ jobs:
           done | jq -R -s -c 'split("\n") | map(select(length > 0))')
           echo "mods=$mods" >> "$GITHUB_OUTPUT"
 
+      - name: Check 89-day schedule
+        id: schedule
+        shell: bash
+        run: |
+          day=$(( $(date -u +%s) / 86400 ))
+          if (( day % 89 == 0 )); then
+            echo "run_due=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_due=false" >> "$GITHUB_OUTPUT"
+          fi
+
   package:
     needs: discover
-    if: ${{ needs.discover.outputs.mods != '[]' }}
+    if: ${{ needs.discover.outputs.mods != '[]' && (github.event_name != 'schedule' || needs.discover.outputs.run_due == 'true') }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
